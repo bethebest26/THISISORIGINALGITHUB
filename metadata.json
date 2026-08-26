@@ -1,0 +1,6 @@
+{
+  "name": "BeTheBest",
+  "description": "A futuristic e-learning platform specializing in Quantum Computing, Brain-Computer Interfaces, and AI Swarms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

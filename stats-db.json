@@ -1,0 +1,30 @@
+{
+  "activeStudents": 354,
+  "testsCompleted": 0,
+  "userProgress": {
+    "admin@bethebest.com": {
+      "points": 0,
+      "completedCourses": [],
+      "unlockedCourses": [],
+      "answeredQuestions": {},
+      "completedVolumes": [],
+      "completedCoursesCount": 0
+    },
+    "guest@bethebest.com": {
+      "points": 0,
+      "completedCourses": [],
+      "unlockedCourses": [],
+      "answeredQuestions": {},
+      "completedVolumes": [],
+      "completedCoursesCount": 0
+    },
+    "teamdoctorstory@gmail.com": {
+      "points": 0,
+      "completedCourses": [],
+      "unlockedCourses": [],
+      "answeredQuestions": {},
+      "completedVolumes": [],
+      "completedCoursesCount": 0
+    }
+  }
+}
