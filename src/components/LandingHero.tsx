@@ -1,4 +1,4 @@
-import { Zap, Sparkles, BookOpen, ShieldCheck, Award, ArrowRight, Brain, Cpu, Users, RefreshCw, Check, Layers, Trophy, Shield } from "lucide-react";
+import { Zap, Sparkles, BookOpen, ShieldCheck, Award, ArrowRight, Brain, Cpu, Users, RefreshCw, Check, Layers, Trophy, Shield, Star, Quote, Newspaper, ArrowUpRight, Clock } from "lucide-react";
 import { motion } from "motion/react";
 import { StatStrip } from "./StatStrip";
 import { FinalCTA } from "./FinalCTA";
@@ -83,14 +83,41 @@ export default function LandingHero({ onGetStarted, onBrowseCourses, activeStude
         </p>
       </div>
 
+      {/* About Us Heading */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.35 }}
+        className="w-full max-w-7xl pt-16 md:pt-24 pb-10 md:pb-14 flex flex-col items-center justify-center relative z-10"
+      >
+        {/* Background ambient glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[150px] bg-gradient-to-r from-blue-400/20 to-indigo-400/20 blur-[80px] rounded-full pointer-events-none"></div>
+        
+        {/* Decorative eyebrow */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 border border-blue-100 shadow-sm backdrop-blur-md text-blue-600 text-xs font-bold uppercase tracking-widest mb-6">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          Our Philosophy
+        </div>
+        
+        {/* Massive Gradient Heading */}
+        <h2 className="text-6xl md:text-7xl lg:text-[90px] font-display font-black tracking-tighter text-center leading-none">
+          <span className="bg-clip-text text-transparent bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700">
+            About 
+          </span>
+          <span className="bg-clip-text text-transparent bg-gradient-to-tl from-blue-600 to-cyan-400 ml-4 lg:ml-6 relative">
+            Us
+            {/* Creative accent line underneath "Us" */}
+            <div className="absolute -bottom-2 left-0 right-0 h-2 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full opacity-80 rounded-l-sm rounded-r-3xl"></div>
+          </span>
+        </h2>
+      </motion.div>
 
         {/* Bento Grid Features / Technology Pillars */}
-        {/* Added margin-top to keep separation from hero above. Hidden on mobile. */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl pt-16"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl px-4 md:px-0"
         >
           {/* Pillar 1 */}
           <div className="glass-card glass-card-hover rounded-3xl p-6 text-left shadow-sm group">
@@ -291,6 +318,200 @@ export default function LandingHero({ onGetStarted, onBrowseCourses, activeStude
           >
             <span>View Full Curriculum &rarr;</span>
           </button>
+        </motion.div>
+
+        {/* SECTION B: SUCCESS STORIES */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center w-full max-w-7xl mt-32 mb-24"
+        >
+          {/* Section Header */}
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/50 text-blue-600 text-xs font-semibold tracking-wider uppercase shadow-sm backdrop-blur-sm mb-6">
+            <Star className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
+            <span>Success Stories</span>
+          </div>
+          
+          <h2 className="text-3xl sm:text-5xl font-display font-bold text-slate-950 tracking-tight leading-tight text-center mb-4">
+            Don't just take our word for it.
+          </h2>
+          <p className="text-slate-500 text-sm sm:text-base md:text-lg font-light max-w-2xl text-center leading-relaxed mb-16">
+            Join thousands of ambitious individuals who have transformed their careers, confidence, and lives through BeTheBest.
+          </p>
+
+          {/* Testimonial Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full px-4 md:px-0">
+            {/* Story 1 */}
+            <div className="glass-card rounded-3xl p-8 relative shadow-sm border border-slate-100/60 bg-white/40 hover:bg-white/60 transition-colors flex flex-col h-full">
+              <Quote className="absolute top-6 right-6 w-10 h-10 text-blue-100/50 rotate-180" />
+              <div className="flex items-center gap-1 mb-6 relative z-10">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
+              </div>
+              <p className="text-slate-700 font-light leading-relaxed mb-8 relative z-10 flex-grow">
+                "The Business Strategy course completely rewired how I approach problem-solving. Within 3 months, I was promoted to Director. The micro-learning format is an absolute game-changer."
+              </p>
+              <div className="flex items-center gap-4 mt-auto relative z-10">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center border border-blue-200 shrink-0">
+                  <span className="text-blue-700 font-bold font-display text-lg">MJ</span>
+                </div>
+                <div>
+                  <h4 className="text-slate-900 font-bold font-display tracking-tight text-sm">Marcus J.</h4>
+                  <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Product Director</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Story 2 (Highlighted) */}
+            <div className="glass-card rounded-3xl p-8 relative shadow-md border border-blue-100/50 bg-gradient-to-br from-white/80 to-blue-50/50 transform md:-translate-y-4 flex flex-col h-full ring-1 ring-blue-500/10 hover:shadow-lg hover:shadow-blue-500/5 transition-all">
+              <Quote className="absolute top-6 right-6 w-10 h-10 text-blue-200/50 rotate-180" />
+              <div className="flex items-center gap-1 mb-6 relative z-10">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
+              </div>
+              <p className="text-slate-800 font-medium leading-relaxed mb-8 relative z-10 text-lg flex-grow">
+                "I used to struggle with public speaking and pitching. The Unshakable Discipline and Leadership tracks gave me the exact frameworks I needed. I just closed my first six-figure client."
+              </p>
+              <div className="flex items-center gap-4 mt-auto relative z-10">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center border border-blue-400 shadow-sm text-white font-bold font-display text-lg shrink-0">
+                  SC
+                </div>
+                <div>
+                  <h4 className="text-slate-900 font-bold font-display tracking-tight text-sm">Sarah Chen</h4>
+                  <p className="text-blue-600 text-[10px] sm:text-xs font-bold uppercase tracking-wider">Startup Founder</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Story 3 */}
+            <div className="glass-card rounded-3xl p-8 relative shadow-sm border border-slate-100/60 bg-white/40 hover:bg-white/60 transition-colors flex flex-col h-full">
+              <Quote className="absolute top-6 right-6 w-10 h-10 text-blue-100/50 rotate-180" />
+              <div className="flex items-center gap-1 mb-6 relative z-10">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
+              </div>
+              <p className="text-slate-700 font-light leading-relaxed mb-8 relative z-10 flex-grow">
+                "Unlike other platforms where you passively watch videos, BeTheBest actually forced me to implement what I learned. My productivity has doubled, and I finally have work-life balance."
+              </p>
+              <div className="flex items-center gap-4 mt-auto relative z-10">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border border-slate-300 shrink-0">
+                  <span className="text-slate-600 font-bold font-display text-lg">DT</span>
+                </div>
+                <div>
+                  <h4 className="text-slate-900 font-bold font-display tracking-tight text-sm">David T.</h4>
+                  <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Senior Engineer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* SECTION C: NEWS & BLOGS */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center w-full max-w-7xl mt-12 mb-24 px-4 md:px-0"
+        >
+          {/* Section Header */}
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100/50 border border-slate-200/60 text-slate-700 text-xs font-semibold tracking-wider uppercase shadow-sm mb-6">
+            <Newspaper className="w-3.5 h-3.5 text-slate-500" />
+            <span>News & Insights</span>
+          </div>
+          
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-slate-900 tracking-tight leading-tight text-center mb-4">
+            Latest From The Blog
+          </h2>
+          <p className="text-slate-500 text-sm sm:text-base font-light max-w-2xl text-center leading-relaxed mb-12">
+            Actionable strategies, psychology breakdowns, and deep dives into high-performance living.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
+            {/* Blog Post 1 */}
+            <a href="#" className="group flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
+              <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                  Mindset
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex items-center gap-3 text-slate-400 text-xs font-medium mb-3">
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> 5 min read</span>
+                  <span>•</span>
+                  <span>Oct 12, 2026</span>
+                </div>
+                <h3 className="text-lg font-bold font-display text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  The Neuroscience of Unbreakable Discipline
+                </h3>
+                <p className="text-slate-500 text-sm font-light leading-relaxed mb-6 line-clamp-2">
+                  Why motivation is a myth and how to rewire your dopamine baseline to make hard work feel effortless.
+                </p>
+                <div className="mt-auto flex items-center text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
+                  Read Article <ArrowUpRight className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </a>
+
+            {/* Blog Post 2 */}
+            <a href="#" className="group flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
+              <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                  Career
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex items-center gap-3 text-slate-400 text-xs font-medium mb-3">
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> 8 min read</span>
+                  <span>•</span>
+                  <span>Oct 08, 2026</span>
+                </div>
+                <h3 className="text-lg font-bold font-display text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  How to Project High-Status Body Language
+                </h3>
+                <p className="text-slate-500 text-sm font-light leading-relaxed mb-6 line-clamp-2">
+                  Stop shrinking in meetings. Here are the micro-adjustments to your posture that instantly command respect.
+                </p>
+                <div className="mt-auto flex items-center text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
+                  Read Article <ArrowUpRight className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </a>
+
+            {/* Blog Post 3 (Hidden on mobile to keep grid balanced if 2 cols, shown on LG) */}
+            <a href="#" className="group hidden lg:flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
+              <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-cyan-600 uppercase tracking-wider">
+                  Productivity
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-grow">
+                <div className="flex items-center gap-3 text-slate-400 text-xs font-medium mb-3">
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> 4 min read</span>
+                  <span>•</span>
+                  <span>Oct 01, 2026</span>
+                </div>
+                <h3 className="text-lg font-bold font-display text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  The "Deep Work" Blueprint for Distracted Minds
+                </h3>
+                <p className="text-slate-500 text-sm font-light leading-relaxed mb-6 line-clamp-2">
+                  A practical guide to finding 3 hours of uninterrupted focus every day, even if your schedule is chaotic.
+                </p>
+                <div className="mt-auto flex items-center text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
+                  Read Article <ArrowUpRight className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </a>
+          </div>
+          
+          <div className="mt-10">
+            <button className="px-6 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm flex items-center gap-2 group">
+              View All Articles
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </motion.div>
 
         {/* Final CTA Section */}

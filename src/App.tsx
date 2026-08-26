@@ -9,6 +9,7 @@ import CoursePreviewPage from "./components/CoursePreviewPage";
 import CourseList from "./components/CourseList";
 import CourseContent from "./components/CourseContent";
 import PaymentModal from "./components/PaymentModal";
+import Footer from "./components/Footer";
 import { User, UserProgress, Course } from "./types";
 import { CheckCircle2, ShieldAlert, Sparkles, X, Award, Zap, Mountain, Gem, ArrowUpCircle, Trophy, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -49,6 +50,16 @@ export default function App() {
   const [buyVolumeId, setBuyVolumeId] = useState<number>(2);
   const [activeStudents, setActiveStudents] = useState(354);
   const [testsCompleted, setTestsCompleted] = useState(10000);
+  
+  const [targetMainCategory, setTargetMainCategory] = useState<string>("All");
+  const [targetSubCategory, setTargetSubCategory] = useState<string | null>(null);
+
+  const handleFooterCategoryClick = (mainCategory: string, subCategory?: string) => {
+    setTargetMainCategory(mainCategory);
+    setTargetSubCategory(subCategory || null);
+    setCurrentTab("courses");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Fetch and poll stats
   useEffect(() => {
@@ -659,6 +670,8 @@ export default function App() {
                 progress={progress}
                 unlockedVersions={unlockedVersions}
                 purchaseDetails={purchaseDetails}
+                initialMainCategory={targetMainCategory}
+                initialSubCategory={targetSubCategory}
                 onSelectCourse={handleSelectCourse}
                 onBuyCourse={(course, volumeId) => {
                   setBuyCourse(course);
@@ -903,12 +916,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Footer */}
-      <footer className="border-t border-white/30 bg-white/20 backdrop-blur-md py-8 text-center text-xs text-slate-400 mt-12 shrink-0 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2">
-          <p className="font-medium">BeTheBest © 2026 | All Rights Reserve</p>
-        </div>
-      </footer>
+      <Footer onCategoryClick={handleFooterCategoryClick} />
     </div>
   );
 }

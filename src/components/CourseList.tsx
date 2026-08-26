@@ -9,6 +9,8 @@ interface CourseListProps {
   progress: UserProgress;
   unlockedVersions?: string[]; // Received from parent to track purchased versions
   purchaseDetails?: Record<string, { purchasedAt: string, expiresAt: string }>;
+  initialMainCategory?: string;
+  initialSubCategory?: string | null;
   onSelectCourse: (course: Course, volumeId: number) => void;
   onBuyCourse: (course: Course, volumeId: number) => void;
   onOpenLogin: () => void;
@@ -20,15 +22,22 @@ export default function CourseList({
   progress,
   unlockedVersions = [],
   purchaseDetails = {},
+  initialMainCategory = "All",
+  initialSubCategory = null,
   onSelectCourse,
   onBuyCourse,
   onOpenLogin,
   isLoggedIn,
 }: CourseListProps) {
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("All");
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>(initialMainCategory);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(initialSubCategory);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [expandedPreview, setExpandedPreview] = useState<{ [key: string]: boolean }>({});
+
+  React.useEffect(() => {
+    setSelectedMainCategory(initialMainCategory);
+    setSelectedSubCategory(initialSubCategory);
+  }, [initialMainCategory, initialSubCategory]);
 
   const categories = ALL_CATEGORIES_ORDERED;
 

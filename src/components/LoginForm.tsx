@@ -360,41 +360,8 @@ export default function LoginForm({ onClose }: LoginFormProps) {
           </button>
         </form>
 
-        {/* Separator */}
-        <div className="relative my-6 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200/50" />
-          </div>
-          <span className="relative bg-[#eceef4]/90 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider backdrop-blur-sm">Or continue with</span>
-        </div>
 
-        {/* Google Authentication Button */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={isLoading}
-          className="w-full flex items-center justify-center space-x-2.5 py-3 px-4 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white shadow-sm rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.61c-.29 1.5-.1.1.1 3.03H12a2.3 2.3 0 0 1 2.31-2.31h1.43c-.87-.8-2.03-1.28-3.34-1.28-2.73 0-5.04 1.84-5.87 4.31H1.21v3.42c1.7 3.39 5.21 5.72 9.29 5.72 4.33 0 7.96-1.43 10.61-3.9l-4.14-3.21c-1.15.77-2.62 1.23-4.13 1.23-3.18 0-5.87-2.15-6.83-5.06h4.14v-.01z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.87-3c-1.08.72-2.46 1.16-4.09 1.16-3.15 0-5.81-2.13-6.77-5.01H1.14v3.13C3.12 21.6 8.1 24 12 24z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.23 14.24a7.14 7.14 0 0 1 0-4.48V6.63H1.14a11.94 11.94 0 0 0 0 10.74l4.09-3.13z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.96 1.19 15.24 0 12 0 8.1 0 3.12 2.4 1.14 5.74l4.09 3.13c.96-2.88 3.62-5.01 6.77-5.01z"
-            />
-          </svg>
-          <span>Continue with Google</span>
-        </button>
+
 
         {/* Suggest Credentials */}
         {!isSignUp && (

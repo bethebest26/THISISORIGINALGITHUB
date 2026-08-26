@@ -105,6 +105,17 @@ export default function Navbar({
                 >
                   About Us
                 </button>
+                <button
+                  id="nav-tab-courses"
+                  onClick={() => onTabChange("courses")}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                    currentTab === "courses" || currentTab === "active-course"
+                      ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
+                      : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
+                  }`}
+                >
+                  Courses
+                </button>
                 <a
                   href="#"
                   className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
@@ -115,7 +126,7 @@ export default function Navbar({
                   href="#"
                   className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
                 >
-                  News
+                  News/Blogs
                 </a>
               </>
             )}
@@ -311,6 +322,20 @@ export default function Navbar({
                   >
                     About Us
                   </button>
+                  <button
+                    id="nav-mobile-courses"
+                    onClick={() => {
+                      onTabChange("courses");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
+                      currentTab === "courses" || currentTab === "active-course"
+                        ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
+                        : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
+                    }`}
+                  >
+                    Courses
+                  </button>
                   <a
                     href="#"
                     className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
@@ -321,7 +346,7 @@ export default function Navbar({
                     href="#"
                     className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
                   >
-                    News
+                    News/Blogs
                   </a>
                   <hr className="border-white/20 my-2" />
                   <button
