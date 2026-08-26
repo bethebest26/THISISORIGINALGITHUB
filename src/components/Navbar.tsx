@@ -105,17 +105,18 @@ export default function Navbar({
                 >
                   About Us
                 </button>
-                <button
-                  id="nav-tab-courses"
-                  onClick={() => onTabChange("courses")}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                    currentTab === "courses" || currentTab === "active-course"
-                      ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
-                      : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
-                  }`}
+                <a
+                  href="#"
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
                 >
-                  Courses
-                </button>
+                  Success Stories
+                </a>
+                <a
+                  href="#"
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
+                >
+                  News
+                </a>
               </>
             )}
 
@@ -158,17 +159,26 @@ export default function Navbar({
                 </button>
               </div>
             ) : (
-              <button
-                id="nav-login-btn"
-                onClick={onOpenLogin}
-                className="relative group overflow-hidden px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-500/15 hover:shadow-lg hover:shadow-blue-500/20 active:scale-[0.98] transition-all"
-              >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative flex items-center space-x-1">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Get Started</span>
-                </span>
-              </button>
+              <>
+                <button
+                  id="nav-login-text"
+                  onClick={onOpenLogin}
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  Log In
+                </button>
+                <button
+                  id="nav-login-btn"
+                  onClick={onOpenLogin}
+                  className="relative group overflow-hidden px-5 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md shadow-blue-500/15 hover:shadow-lg hover:shadow-blue-500/20 active:scale-[0.98] transition-all"
+                >
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span className="relative flex items-center space-x-1">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Get Started</span>
+                  </span>
+                </button>
+              </>
             )}
           </div>
 
@@ -301,19 +311,28 @@ export default function Navbar({
                   >
                     About Us
                   </button>
+                  <a
+                    href="#"
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
+                  >
+                    Success Stories
+                  </a>
+                  <a
+                    href="#"
+                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
+                  >
+                    News
+                  </a>
+                  <hr className="border-white/20 my-2" />
                   <button
-                    id="nav-mobile-courses"
+                    id="nav-mobile-login-text"
                     onClick={() => {
-                      onTabChange("courses");
+                      onOpenLogin();
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
-                      currentTab === "courses" || currentTab === "active-course"
-                        ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
-                        : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
-                    }`}
+                    className="w-full flex items-center justify-center space-x-1.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >
-                    Courses
+                    Log In
                   </button>
                   <button
                     id="nav-mobile-login"
