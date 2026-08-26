@@ -1098,6 +1098,299 @@ Please return your response in JSON format matching this schema:
     }
   });
 
+  // Create dynamic full course with chapters, introduction, and MCQs in a single step
+  app.post("/api/admin/publish-full-course", async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        category,
+        mainCategory,
+        subCategory,
+        price,
+        discountedPrice,
+        difficulty,
+        bannerUrl,
+        quickNote,
+        tableOfContents,
+        basicIntroduction,
+        chapters
+      } = req.body;
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: "Course title is required." });
+      }
+
+      console.log(`Publishing Full Course: "${title}"...`);
+
+      // 1. Save to Supabase if enabled
+      if (supabase) {
+        try {
+          // Delete existing course with this title to enforce ONE source of truth
+          const { data: existingCourses } = await supabase
+            .from("courses")
+            .select("id")
+            .eq("title", title);
+
+          if (existingCourses && existingCourses.length > 0) {
+            for (const ec of existingCourses) {
+              const { data: vRows } = await supabase
+                .from('course_volumes')
+                .select('id')
+                .eq('course_id', ec.id);
+
+              if (vRows && vRows.length > 0) {
+                const volIds = vRows.map((v: any) => v.id);
+                const { data: lRows } = await supabase
+                  .from('lessons')
+                  .select('id')
+                  .in('volume_id', volIds);
+                if (lRows && lRows.length > 0) {
+                  const lessonIds = lRows.map((l: any) => l.id);
+                  await supabase.from('reading_cards').delete().in('lesson_id', lessonIds);
+                  await supabase.from('mcqs').delete().in('lesson_id', lessonIds);
+                }
+                await supabase.from('lessons').delete().in('volume_id', volIds);
+                await supabase.from('course_volumes').delete().in('id', volIds);
+              }
+              await supabase.from('courses').delete().eq('id', ec.id);
+            }
+          }
+
+          // Create the course
+          const { data: newCourse, error: courseError } = await supabase
+            .from("courses")
+            .insert({
+              title,
+              description: description || "Comprehensive course",
+              banner_url: bannerUrl || "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=800&auto=format&fit=crop",
+              price: Number(discountedPrice || price || 49),
+              category: category || `${mainCategory}, ${subCategory}` || "Self-Mastery",
+              main_category: mainCategory || "Self-Mastery",
+              sub_category: subCategory || "Core",
+              status: 'published',
+              difficulty: difficulty || "Intermediate",
+              estimated_time: "4 Hours",
+              is_published: true
+            })
+            .select()
+            .single();
+
+          if (courseError) throw courseError;
+
+          // Create Volume 1
+          const { data: vol1, error: vol1Err } = await supabase
+            .from("course_volumes")
+            .insert({
+              course_id: newCourse.id,
+              title: "Volume 1: Foundations",
+              description: "Essential foundational traits and mindset shifts.",
+              volume_number: 1
+            })
+            .select()
+            .single();
+
+          if (vol1Err) throw vol1Err;
+
+          // Insert Course Overview Lesson
+          const introLessonId = `l_intro_${Date.now()}`;
+          const introIntro = `${(basicIntroduction || "").substring(0, 150)}...||IMAGE_URL||https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=500&auto=format&fit=crop`;
+          
+          const { error: introErr } = await supabase
+            .from("lessons")
+            .insert({
+              id: introLessonId,
+              volume_id: vol1.id,
+              title: "Course Introduction & Quick Note",
+              trait_number: 1,
+              reading_time: "5 Minutes",
+              difficulty: "Beginner",
+              introduction: introIntro,
+              real_life_scenario: "Understanding the outline of this transformative process.",
+              real_life_outcome: "Unlocking positive high-value frames of personal reference."
+            });
+
+          if (!introErr) {
+            // Save reading cards for quickNote, tableOfContents, basicIntroduction
+            await supabase.from("reading_cards").insert([
+              {
+                lesson_id: introLessonId,
+                title: "Quick Note for Students",
+                content: quickNote || "Welcome to the course! Remain focused and disciplined.",
+                display_order: 1
+              },
+              {
+                lesson_id: introLessonId,
+                title: "Table of Contents",
+                content: tableOfContents || "This course outlines crucial self-mastery principles.",
+                display_order: 2
+              },
+              {
+                lesson_id: introLessonId,
+                title: "Basic Introduction",
+                content: basicIntroduction || "Start your journey today.",
+                display_order: 3
+              }
+            ]);
+
+            // Save a simple MCQ for introduction
+            await supabase.from("mcqs").insert({
+              id: `q_intro_${Date.now()}`,
+              lesson_id: introLessonId,
+              question: "What is the primary key to succeeding in this academy course?",
+              options: ["Passive reading", "Active application and discipline", "Skipping lessons", "Waiting for motivation"],
+              correct_answer: "Active application and discipline",
+              feedback: "Correct! True self-mastery comes from active repetition and unwavering discipline."
+            });
+          }
+
+          // Insert each chapter
+          if (Array.isArray(chapters)) {
+            for (let cIdx = 0; cIdx < chapters.length; cIdx++) {
+              const ch = chapters[cIdx];
+              const chapterLessonId = `l_ch_${Date.now()}_${cIdx}`;
+              const chapIntro = `${(ch.content || "").substring(0, 150)}...||IMAGE_URL||https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80`;
+
+              const { error: chapErr } = await supabase
+                .from("lessons")
+                .insert({
+                  id: chapterLessonId,
+                  volume_id: vol1.id,
+                  title: ch.title || `Chapter ${cIdx + 1}`,
+                  trait_number: cIdx + 2, // offset by intro lesson
+                  reading_time: "15 Minutes",
+                  difficulty: "Intermediate",
+                  introduction: chapIntro,
+                  real_life_scenario: "Applying this core chapter lesson standard dynamically.",
+                  real_life_outcome: "Unlocking positive high-value frames of personal reference."
+                });
+
+              if (chapErr) continue;
+
+              // Reading Card
+              await supabase.from("reading_cards").insert({
+                lesson_id: chapterLessonId,
+                title: ch.title || `Chapter ${cIdx + 1}`,
+                content: ch.content,
+                display_order: 1
+              });
+
+              // MCQs
+              if (Array.isArray(ch.mcqs)) {
+                for (let qIdx = 0; qIdx < ch.mcqs.length; qIdx++) {
+                  const q = ch.mcqs[qIdx];
+                  await supabase.from("mcqs").insert({
+                    id: `q_ch_${Date.now()}_${cIdx}_${qIdx}`,
+                    lesson_id: chapterLessonId,
+                    question: q.question,
+                    options: q.options,
+                    correct_answer: q.correctAnswer,
+                    feedback: q.feedback || "Correct! Excellent lesson focus."
+                  });
+                }
+              }
+            }
+          }
+
+          return res.json({ success: true, courseId: newCourse.id });
+        } catch (dbErr: any) {
+          console.warn("Supabase full course publish failed, falling back to local file database:", dbErr.message);
+        }
+      }
+
+      // Local Fallback saving
+      const courses = getLocalCourses();
+      const filteredCourses = courses.filter(c => c.title.toLowerCase() !== title.toLowerCase());
+
+      const courseId = `c_local_${Date.now()}`;
+      const volume1Id = `v_local_${Date.now()}_1`;
+
+      const introLessons = [
+        {
+          id: `l_intro_${Date.now()}`,
+          volume_id: volume1Id,
+          title: "Course Introduction & Quick Note",
+          trait_number: 1,
+          reading_time: "5 Minutes",
+          difficulty: "Beginner",
+          introduction: `${(basicIntroduction || "").substring(0, 150)}...`,
+          real_life_scenario: "Understanding the outline of this transformative process.",
+          real_life_outcome: "Unlocking positive high-value frames of personal reference.",
+          reading_cards: [
+            { title: "Quick Note for Students", content: quickNote || "Welcome!", display_order: 1 },
+            { title: "Table of Contents", content: tableOfContents || "Outline", display_order: 2 },
+            { title: "Basic Introduction", content: basicIntroduction || "Overview", display_order: 3 }
+          ],
+          mcqs: [
+            {
+              id: `q_intro_${Date.now()}`,
+              question: "What is the primary key to succeeding in this academy course?",
+              options: ["Passive reading", "Active application and discipline", "Skipping lessons", "Waiting for motivation"],
+              correct_answer: "Active application and discipline",
+              feedback: "Correct! True self-mastery comes from active repetition."
+            }
+          ]
+        }
+      ];
+
+      const userChapters = Array.isArray(chapters) ? chapters.map((ch, cIdx) => ({
+        id: `l_ch_${Date.now()}_${cIdx}`,
+        volume_id: volume1Id,
+        title: ch.title || `Chapter ${cIdx + 1}`,
+        trait_number: cIdx + 2,
+        reading_time: "15 Minutes",
+        difficulty: "Intermediate",
+        introduction: `${(ch.content || "").substring(0, 150)}...`,
+        real_life_scenario: "Applying this core chapter lesson standard dynamically.",
+        real_life_outcome: "Unlocking positive high-value frames of personal reference.",
+        reading_cards: [
+          { title: ch.title || `Chapter ${cIdx + 1}`, content: ch.content, display_order: 1 }
+        ],
+        mcqs: Array.isArray(ch.mcqs) ? ch.mcqs.map((q, qIdx) => ({
+          id: `q_ch_${Date.now()}_${cIdx}_${qIdx}`,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correctAnswer,
+          feedback: q.feedback || "Correct! Excellent focus."
+        })) : []
+      })) : [];
+
+      const fullLocalCourse = {
+        id: courseId,
+        title,
+        description: description || "Comprehensive course",
+        banner_url: bannerUrl || "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=800&auto=format&fit=crop",
+        price: Number(discountedPrice || price || 49),
+        category: category || `${mainCategory}, ${subCategory}` || "Self-Mastery",
+        main_category: mainCategory || "Self-Mastery",
+        sub_category: subCategory || "Core",
+        status: 'published',
+        difficulty: difficulty || "Intermediate",
+        estimated_time: "4 Hours",
+        is_published: true,
+        created_at: new Date().toISOString(),
+        course_volumes: [
+          {
+            id: volume1Id,
+            course_id: courseId,
+            title: "Volume 1: Foundations",
+            description: "Essential foundational traits and mindset shifts.",
+            volume_number: 1,
+            lessons: [...introLessons, ...userChapters]
+          }
+        ]
+      };
+
+      filteredCourses.push(fullLocalCourse);
+      saveLocalCourses(filteredCourses);
+
+      return res.json({ success: true, courseId });
+    } catch (err: any) {
+      console.error("Error publishing full course:", err);
+      res.status(500).json({ error: "Failed to publish full course", details: err.message });
+    }
+  });
+
   // Create course header and volume shells (deleting old elements to prevent duplication)
   app.post("/api/admin/publish-course-header", async (req, res) => {
     try {
@@ -1837,8 +2130,7 @@ Generate the course structure matching the requested JSON schema. Be highly desc
   app.get("/api/admin/stats", async (req, res) => {
     try {
       console.log("Fetching admin stats...");
-      // 1. Total Courses
-      let totalCourses = 2; // Default baseline
+      let totalCourses = 0;
       let dbCoursesCount = 0;
       if (supabase) {
         try {
@@ -1849,35 +2141,31 @@ Generate the course structure matching the requested JSON schema. Be highly desc
         } catch (err) {}
       }
       const localCourses = getLocalCourses();
-      totalCourses = Math.max(2, dbCoursesCount + localCourses.length);
+      totalCourses = dbCoursesCount + localCourses.length;
       
-      // 2. Total Buyers / Students
-      let totalBuyers = 354; // Default baseline
+      let totalBuyers = 0;
       if (supabase) {
         const { data, error } = await supabase.from('profiles').select('id').not('role', 'eq', 'admin');
         if (!error && data) {
-          totalBuyers = Math.max(354, data.length);
+          totalBuyers = data.length;
         }
       }
 
-      // 3. Total Revenue
-      let totalRevenue = 17346; // Default baseline
+      let totalRevenue = 0;
       if (supabase) {
         const { data, error } = await supabase.from('purchases').select('version_id');
         if (!error && data) {
-          const dbRevenue = data.reduce((sum, item) => {
+          totalRevenue = data.reduce((sum, item) => {
             return sum + (item.version_id === '1' ? 49 : 99);
           }, 0);
-          totalRevenue = 17346 + dbRevenue;
         }
       }
 
-      // 4. Total MCQs Answered
-      let totalMCQsAnswered = 1008; // Default baseline
+      let totalMCQsAnswered = 0;
       if (supabase) {
         const { count, error } = await supabase.from('user_progress').select('*', { count: 'exact', head: true });
         if (!error && count !== null) {
-          totalMCQsAnswered = 1008 + count * 5; // Estimating 5 MCQs per completed session
+          totalMCQsAnswered = count * 5;
         }
       }
 
@@ -1890,196 +2178,27 @@ Generate the course structure matching the requested JSON schema. Be highly desc
     } catch (err: any) {
       console.error("Error fetching admin stats:", err);
       res.json({
-        totalCourses: 2,
-        totalBuyers: 354,
-        totalRevenue: 17346,
-        totalMCQsAnswered: 1008
+        totalCourses: 0,
+        totalBuyers: 0,
+        totalRevenue: 0,
+        totalMCQsAnswered: 0
       });
     }
   });
 
-  // Generate exactly 5 MCQs from a chapter's text
-  app.post("/api/admin/generate-mcqs", async (req, res) => {
-    const ai = getAI();
-    const { chapterText } = req.body;
-    if (!chapterText) {
-      return res.status(400).json({ error: "Chapter text is required." });
-    }
-    try {
-      console.log("Generating MCQs using Gemini 3.5 Flash...");
-      const prompt = `You are an expert assessment developer. Read the following chapter material and write exactly 5 highly engaging, challenging multiple-choice questions (MCQs) designed to evaluate reading retention.
-Each question must have:
-- A clear, concise question statement.
-- Exactly 4 options.
-- A correct answer matching one of the options exactly.
-- Feedback explaining why the correct answer is right.
-
-Chapter content:
-${chapterText}`;
-
-      let result = null;
-
-      try {
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                mcqs: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      question: { type: Type.STRING },
-                      options: {
-                        type: Type.ARRAY,
-                        items: { type: Type.STRING }
-                      },
-                      correctAnswer: { type: Type.STRING, description: "Must match one of the options EXACTLY." },
-                      feedback: { type: Type.STRING }
-                    },
-                    required: ["question", "options", "correctAnswer", "feedback"]
-                  }
-                }
-              },
-              required: ["mcqs"]
-            }
-          }
-        });
-
-        const text = response.text || "{}";
-        result = JSON.parse(text.trim());
-      } catch (geminiErr: any) {
-        console.log("Generating comprehension assessment locally (quota optimization).");
-        const mcqs = generateHeuristicMCQs(chapterText);
-        result = { mcqs };
-      }
-
-      res.json(result);
-    } catch (err: any) {
-      console.error("Error in generate-mcqs API:", err);
-      res.status(500).json({ error: err.message || "Failed to generate MCQs." });
-    }
-  });
-
-  // Generate a modern, highly-relevant AI chapter illustration
-  app.post("/api/admin/generate-chapter-image", async (req, res) => {
-    const ai = getAI();
-    const { chapterTitle, chapterText } = req.body;
-    const prompt = `A clean, professional, high-concept modern digital abstract illustration themed around: "${chapterTitle || 'Growth'}". High-contrast visual, futuristic corporate design, minimalist vectors, white and blue gradient tones.`;
-    
-    try {
-      console.log("Generating AI Image with gemini-3.1-flash-lite-image...");
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-lite-image",
-        contents: {
-          parts: [{ text: prompt }]
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "16:9"
-          }
-        }
-      });
-
-      let base64Image = "";
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData?.data) {
-            base64Image = `data:image/png;base64,${part.inlineData.data}`;
-            break;
-          }
-        }
-      }
-
-      if (base64Image) {
-        return res.json({ imageUrl: base64Image });
-      }
-      throw new Error("No inline image data received.");
-    } catch (err: any) {
-      console.log("Using high-resolution illustration framework (quota optimization).");
-      // Fallback: Beautifully curated, high-resolution thematic gradients/abstract photos
-      const seeds = [
-        "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800&auto=format&fit=crop", // blue grad
-        "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=800&auto=format&fit=crop", // bright grad
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop"  // abstract shapes
-      ];
-      const randomSeed = seeds[Math.floor(Math.random() * seeds.length)];
-      res.json({ imageUrl: randomSeed });
-    }
-  });
-
-  // Paraphrase content via Gemini API
-  app.post("/api/admin/paraphrase-content", async (req, res) => {
-    const ai = getAI();
-    try {
-      const { text } = req.body;
-      if (!text || !text.trim()) {
-        return res.status(400).json({ error: "No text content provided" });
-      }
-
-      const prompt = `
-Paraphrase the following text. 
-Rules:
-- Rewrite every paragraph in different wording and sentence structure
-- Do NOT change, add, or remove any facts, meaning, examples, or key points from the original
-- Do NOT shorten or summarize — paraphrase at roughly the same length and depth as the original
-- Maintain the same tone as the source material
-- Keep any lists, steps, or structured content in the same structure, just reworded
-- Do not add disclaimers, meta-commentary, or AI-generated notices.
-
-Original text:
-${text}
-`;
-
-      let paraphrasedText = "";
-      try {
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: prompt
-        });
-        paraphrasedText = response.text || "";
-      } catch (geminiErr: any) {
-        console.log("Rendering text directly (quota optimization).");
-        paraphrasedText = text; // Elegant fallback
-      }
-
-      res.json({ paraphrasedText });
-    } catch (err: any) {
-      console.error("Error paraphrasing content:", err);
-      res.status(500).json({ error: "Failed to paraphrase content", details: err.message });
-    }
-  });
-
-  // Vite middleware for development
+  // End of routes
   if (process.env.NODE_ENV !== "production") {
-    try {
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: "spa",
-      });
-      app.use(vite.middlewares);
-      console.log("Vite middleware initialized");
-    } catch (e) {
-      console.error("Failed to initialize Vite middleware:", e);
-    }
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      const rootIndex = path.join(process.cwd(), 'index.html');
-      res.sendFile(rootIndex);
+      res.sendFile(path.join(distPath, 'index.html'));
     });
-  }
-
-  // Run database seeding of original courses
-  try {
-    seedDatabaseOfOriginalCourses();
-  } catch (err) {
-    console.error("Failed to run seedDatabaseOfOriginalCourses:", err);
   }
 
   app.listen(PORT, "0.0.0.0", () => {
@@ -2087,69 +2206,48 @@ ${text}
   });
 }
 
-async function seedDatabaseOfOriginalCourses() {
-  console.log("Starting original courses database seeding...");
-  
-  const ORIGINAL_COURSES_METADATA = [
-    {
-      title: "Become The Man You Should Be Proud Of",
-      description: "Master self-discipline, mindset control, presence, and status-based social interactions to become the highest-value version of yourself.",
-      bannerUrl: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=600&auto=format&fit=crop",
-      category: "Self-Mastery",
-      price: 99,
-      difficulty: "Intermediate",
-      estimatedTime: "4 Hours",
-      lessonIds: [
-        { id: "pm-b1", volume: 1, traitNumber: 1 },
-        { id: "pm-b2", volume: 1, traitNumber: 2 },
-        { id: "pm-b3", volume: 2, traitNumber: 3 },
-        { id: "pm-b4", volume: 2, traitNumber: 4 }
-      ]
-    },
-    {
-      title: "Do's and Don'ts in 2026 to Attract Women",
-      description: "Modern attraction blueprints for 2026. Learn how to navigate high-value listening, emotional chemistry, masculine polarity, and healthy standards.",
-      bannerUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=600&auto=format&fit=crop",
-      category: "Attraction",
-      price: 99,
-      difficulty: "Advanced",
-      estimatedTime: "4 Hours",
-      lessonIds: [
-        { id: "aw-b1", volume: 1, traitNumber: 1 },
-        { id: "aw-b2", volume: 1, traitNumber: 2 },
-        { id: "aw-b3", volume: 2, traitNumber: 3 },
-        { id: "aw-b4", volume: 2, traitNumber: 4 }
-      ]
-    },
-    {
-      title: "How to Make Her Chase You",
-      description: "Stop chasing and start attracting. Master high-status micro-behaviors, selective mystery, emotional intrigue, and non-neediness.",
-      bannerUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=600&auto=format&fit=crop",
-      category: "Dating",
-      price: 99,
-      difficulty: "Advanced",
-      estimatedTime: "4 Hours",
-      lessonIds: [
-        { id: "hc-b1", volume: 1, traitNumber: 1 },
-        { id: "hc-b2", volume: 1, traitNumber: 2 },
-        { id: "hc-b3", volume: 2, traitNumber: 3 },
-        { id: "hc-b4", volume: 2, traitNumber: 4 }
-      ]
-    }
-  ];
+// Seed Database on startup if needed
+const ORIGINAL_COURSES_METADATA = [
+  {
+    title: "Mastery Foundations",
+    description: "The core framework for unshakable discipline.",
+    bannerUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+    price: 49,
+    category: "Mindset",
+    difficulty: "Beginner",
+    estimatedTime: "2 Hours",
+    lessonIds: [
+      { id: "pm-b1", volume: 1, traitNumber: 1 },
+      { id: "pm-b2", volume: 1, traitNumber: 2 }
+    ]
+  },
+  {
+    title: "Do's and Don'ts in 2026 to Attract Women",
+    description: "Modern communication, high-status body language.",
+    bannerUrl: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=800&q=80",
+    price: 99,
+    category: "Communication",
+    difficulty: "Advanced",
+    estimatedTime: "4 Hours",
+    lessonIds: [
+      { id: "pm-b3", volume: 2, traitNumber: 3 },
+      { id: "pm-b4", volume: 2, traitNumber: 4 }
+    ]
+  }
+];
 
-  // 1. Seed Local File Database (courses-db.json)
+async function seedOriginalCoursesIfEmpty() {
+  // 1. Seed Local File Database (if used as fallback/cache)
+  let updatedLocal = false;
   try {
     const localCourses = getLocalCourses();
-    let updatedLocal = false;
-
     for (const meta of ORIGINAL_COURSES_METADATA) {
-      const existingLocal = localCourses.find(c => c.title.toLowerCase() === meta.title.toLowerCase());
-      if (!existingLocal) {
-        const courseId = `c_${meta.title.replace(/\s+/g, '_').toLowerCase()}`;
-        const vol1Id = `vol_1_${courseId}`;
-        const vol2Id = `vol_2_${courseId}`;
-        
+      if (!localCourses.find((c: any) => c.title === meta.title)) {
+        // Build full course object for local storage
+        const courseId = Math.random().toString(36).substring(7);
+        const vol1Id = courseId + "-v1";
+        const vol2Id = courseId + "-v2";
+
         const vol1Lessons = meta.lessonIds
           .filter(l => l.volume === 1)
           .map(l => {
@@ -2163,7 +2261,7 @@ async function seedDatabaseOfOriginalCourses() {
               title: expanded.title,
               trait_number: l.traitNumber,
               reading_time: expanded.readingTime || "10 Minutes",
-              difficulty: expanded.difficulty || "Intermediate",
+              difficulty: expanded.difficulty || "Beginner",
               introduction,
               real_life_scenario: expanded.realLifeExample?.scenario || "Applying this core trait in daily challenging environments.",
               real_life_outcome: expanded.realLifeExample?.outcome || "Unlocking positive high-value frames of personal reference.",

@@ -372,33 +372,9 @@ export const dbService = {
       // Filter out admin
       buyers = buyers.filter(b => b.role !== 'admin' && b.email !== 'admin@bethebest.com');
 
-      // If no buyers, we can parse some local keys or return mock list for realistic demonstration
+      // If no buyers, return empty array
       if (buyers.length === 0) {
-        // Return some beautiful, mock records so that Admin is never blank on fresh install
-        return [
-          {
-            userId: "u-mock-1",
-            userName: "Pranav Sharma",
-            userEmail: "pranav@gmail.com",
-            userAge: 24,
-            userWhatsapp: "+91 98765 43210",
-            purchasedVersions: ["Become The Man - Version 1"],
-            mcqPerformance: { "pm-b1": 4, "pm-b2": 5 },
-            totalPoints: 340,
-            currentTier: "Sharpened"
-          },
-          {
-            userId: "u-mock-2",
-            userName: "Amit Patel",
-            userEmail: "amit.patel@yahoo.com",
-            userAge: 21,
-            userWhatsapp: "+91 87654 32109",
-            purchasedVersions: ["Become The Man - Version 1", "Become The Man - Version 2"],
-            mcqPerformance: { "pm-b1": 3, "pm-b2": 4, "pm-b3": 5 },
-            totalPoints: 620,
-            currentTier: "Elevated"
-          }
-        ];
+        return [];
       }
 
       // For each buyer, fetch purchases and progress

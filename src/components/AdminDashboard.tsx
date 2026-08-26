@@ -28,10 +28,10 @@ export default function AdminDashboard() {
 
   // Stats Row State
   const [stats, setStats] = useState({
-    totalCourses: 2,
-    totalBuyers: 354,
-    totalRevenue: 17346,
-    totalMCQsAnswered: 1008
+    totalCourses: 0,
+    totalBuyers: 0,
+    totalRevenue: 0,
+    totalMCQsAnswered: 0
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
@@ -55,12 +55,34 @@ export default function AdminDashboard() {
   const [courseDesc, setCourseDesc] = useState('');
   const [courseBanner, setCourseBanner] = useState('');
   const [coursePrice, setCoursePrice] = useState('99');
+  const [courseDiscountedPrice, setCourseDiscountedPrice] = useState('49');
   const [courseMainCat, setCourseMainCat] = useState('');
   const [courseSubCat, setCourseSubCat] = useState('');
   const [courseDifficulty, setCourseDifficulty] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Intermediate');
   const [courseTime, setCourseTime] = useState(''); // Empty initially, auto-updates to "~X mins"
   const [courseStatusMsg, setCourseStatusMsg] = useState('');
   const [savingCourse, setSavingCourse] = useState(false);
+
+  // Multi-step Course Creation State
+  const [courseCreationStep, setCourseCreationStep] = useState(1);
+  const [quickNote, setQuickNote] = useState('');
+  const [tableOfContents, setTableOfContents] = useState('');
+  const [basicIntroduction, setBasicIntroduction] = useState('');
+  const [chapters, setChapters] = useState([
+    {
+      title: 'Chapter 1: The Foundations of Framing',
+      content: '',
+      details: 'Understanding how perspectives shape interactions and set personal boundaries.',
+      mcqs: [
+        {
+          question: '',
+          options: ['', '', '', ''],
+          correctAnswer: 'A',
+          feedback: 'Correct! Great understanding of this principle.'
+        }
+      ]
+    }
+  ]);
 
   // Document uploading & parsing state
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -317,42 +339,9 @@ export default function AdminDashboard() {
           date: new Date(c.created_at || Date.now()).toLocaleDateString()
         });
       });
-      if (extracted.length === 0) {
-        extracted.push(
-          {
-            id: 'sample-1',
-            courseTitle: "Mastery Foundations",
-            chapterTitle: "Discipline, Boundaries and Decisiveness",
-            status: '5 MCQs Ready ✓',
-            date: "Today"
-          },
-          {
-            id: 'sample-2',
-            courseTitle: "Do's and Don'ts in 2026 to Attract Women",
-            chapterTitle: "Non-Verbal High Status Communication",
-            status: '5 MCQs Ready ✓',
-            date: "Yesterday"
-          }
-        );
-      }
       setRecentChapters(extracted);
     } else {
-      setRecentChapters([
-        {
-          id: 'sample-1',
-          courseTitle: "Mastery Foundations",
-          chapterTitle: "Discipline, Boundaries and Decisiveness",
-          status: '5 MCQs Ready ✓',
-          date: "Today"
-        },
-        {
-          id: 'sample-2',
-          courseTitle: "Do's and Don'ts in 2026 to Attract Women",
-          chapterTitle: "Non-Verbal High Status Communication",
-          status: '5 MCQs Ready ✓',
-          date: "Yesterday"
-        }
-      ]);
+      setRecentChapters([]);
     }
   }, [courses]);
 
@@ -399,72 +388,137 @@ export default function AdminDashboard() {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
 
-  // Add New Course Handler
-  // Add New Course Handler
+  // Add New Course Handler (Multi-step Wizard)
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Step 1 validation
     if (!courseTitle || !courseMainCat || !courseSubCat) {
-      setCourseStatusMsg('Please fill in all required fields (*).');
+      setCourseStatusMsg('Please fill in all required fields (*) in Step 1.');
       return;
     }
 
+    if (courseCreationStep === 1) {
+      // Just progress to step 2
+      setCourseCreationStep(2);
+      setCourseStatusMsg('');
+      return;
+    }
+
+    // Step 2 validation
+    if (!quickNote || !basicIntroduction) {
+      setCourseStatusMsg('Please fill in all introductory fields (Quick Note, Basic Introduction).');
+      return;
+    }
+
+    if (chapters.length === 0) {
+      setCourseStatusMsg('Please add at least one chapter.');
+      return;
+    }
+
+    // Validate chapters
+    for (let i = 0; i < chapters.length; i++) {
+      const ch = chapters[i];
+      if (!ch.title.trim()) {
+        setCourseStatusMsg(`Please specify a title for Chapter ${i + 1} in the Table of Contents.`);
+        return;
+      }
+      if (!ch.content.trim()) {
+        setCourseStatusMsg(`Please fill in the full content for Chapter ${i + 1} inside the chapter details workspace.`);
+        return;
+      }
+      if (!ch.details.trim()) {
+        setCourseStatusMsg(`Please provide a summary outline/details for Chapter ${i + 1} inside the Table of Contents.`);
+        return;
+      }
+      for (let j = 0; j < ch.mcqs.length; j++) {
+        const mcq = ch.mcqs[j];
+        if (!mcq.question.trim()) {
+          setCourseStatusMsg(`Please fill in the question for MCQ of Chapter ${i + 1}.`);
+          return;
+        }
+        if (mcq.options.some(opt => !opt.trim())) {
+          setCourseStatusMsg(`Please fill in all 4 options for MCQ of Chapter ${i + 1}.`);
+          return;
+        }
+      }
+    }
+
+    // Dynamically compile a beautiful, structured Markdown table of contents from chapters
+    const dynamicTOC = `| S.No. | Chapter Title | Core Topic Outline |\n| :--- | :--- | :--- |\n` + 
+      chapters.map((ch, idx) => `| **Chapter ${idx + 1}** | ${ch.title} | ${ch.details} |`).join('\n');
+
     setSavingCourse(true);
-    setCourseStatusMsg('Saving new course...');
+    setCourseStatusMsg('Saving new full course with chapters & MCQs...');
 
     try {
-      if (supabase) {
-        const newId = `c_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-        const banner = courseBanner || "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=800&auto=format&fit=crop";
-        const priceNum = parseFloat(coursePrice) || 99;
+      const response = await fetch('/api/admin/publish-full-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: courseTitle,
+          description: courseDesc,
+          mainCategory: courseMainCat,
+          subCategory: courseSubCat,
+          price: parseFloat(coursePrice) || 99,
+          discountedPrice: parseFloat(courseDiscountedPrice) || 49,
+          difficulty: courseDifficulty,
+          bannerUrl: courseBanner || "https://images.unsplash.com/photo-1507668077129-56e32842fceb?q=80&w=800&auto=format&fit=crop",
+          quickNote,
+          tableOfContents: dynamicTOC,
+          basicIntroduction,
+          chapters
+        })
+      });
 
-        const { error } = await supabase
-          .from('courses')
-          .insert({
-            id: newId,
-            title: courseTitle,
-            description: courseDesc,
-            banner_url: banner,
-            price: priceNum,
-            main_category: courseMainCat,
-            sub_category: courseSubCat,
-            category: `${courseMainCat}, ${courseSubCat}`,
-            status: 'published',
-            difficulty: courseDifficulty,
-            estimated_time: courseTime || '2 Hours',
-            created_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-
-        // Save raw text in localStorage for chapter extraction later
-        const textToSave = paraphrasedText || parsedText;
-        if (textToSave) {
-          localStorage.setItem(`bethebest_course_raw_text_${newId}`, textToSave);
-        }
-
-        setCourseStatusMsg('Course successfully created!');
-        fetchCourses();
-        fetchStats();
-        setTimeout(() => {
-          setShowAddCourseModal(false);
-          // Reset Form
-          setCourseTitle('');
-          setCourseDesc('');
-          setCourseBanner('');
-          setCoursePrice('99');
-          setCourseMainCat('');
-          setCourseSubCat('');
-          setCourseStatusMsg('');
-          // Reset parsing states
-          setUploadedFileName(null);
-          setParsedText('');
-          setWordCount(null);
-          setParsingState('idle');
-          setParsingError(null);
-        }, 1500);
-      } else {
-        throw new Error('Supabase integration is not fully configured.');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Server error');
       }
+
+      setCourseStatusMsg('Course successfully created & published!');
+      if (typeof fetchCourses === 'function') fetchCourses();
+      if (typeof fetchStats === 'function') fetchStats();
+      
+      setTimeout(() => {
+        setShowAddCourseModal(false);
+        // Reset all forms
+        setCourseTitle('');
+        setCourseDesc('');
+        setCourseBanner('');
+        setCoursePrice('99');
+        setCourseDiscountedPrice('49');
+        setCourseMainCat('');
+        setCourseSubCat('');
+        setCourseStatusMsg('');
+        setCourseCreationStep(1);
+        setQuickNote('');
+        setTableOfContents('');
+        setBasicIntroduction('');
+        setChapters([
+          {
+            title: 'Chapter 1: The Foundations of Framing',
+            content: '',
+            details: 'Understanding how perspectives shape interactions and set personal boundaries.',
+            mcqs: [
+              {
+                question: '',
+                options: ['', '', '', ''],
+                correctAnswer: 'A',
+                feedback: 'Correct! Great understanding of this principle.'
+              }
+            ]
+          }
+        ]);
+        
+        // Reset parsing states
+        setUploadedFileName(null);
+        setParsedText('');
+        setWordCount(null);
+        setParsingState('idle');
+        setParsingError(null);
+      }, 1500);
+
     } catch (err: any) {
       console.error(err);
       setCourseStatusMsg(`Failed to save course: ${err.message || 'Unknown Error'}`);
@@ -676,6 +730,7 @@ export default function AdminDashboard() {
     setCourseDesc('');
     setCourseBanner('');
     setCoursePrice('99');
+    setCourseDiscountedPrice('49');
     setCourseMainCat('');
     setCourseSubCat('');
     setCourseStatusMsg('');
@@ -687,6 +742,25 @@ export default function AdminDashboard() {
     setManualChapters([]);
     setManualChapterTitle('');
     setManualChapterContent('');
+    setCourseCreationStep(1);
+    setQuickNote('');
+    setTableOfContents('');
+    setBasicIntroduction('');
+    setChapters([
+      {
+        title: 'Chapter 1: The Foundations of Framing',
+        content: '',
+        details: 'Understanding how perspectives shape interactions and set personal boundaries.',
+        mcqs: [
+          {
+            question: '',
+            options: ['', '', '', ''],
+            correctAnswer: 'A',
+            feedback: 'Correct! Great understanding of this principle.'
+          }
+        ]
+      }
+    ]);
   };
 
   // Add New Chapter / Process with AI Handler
@@ -1514,10 +1588,22 @@ export default function AdminDashboard() {
         {/* ==================================== */}
         {showAddCourseModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-[8px]">
-            <div className="bg-white rounded-[32px] border border-slate-200/80 shadow-2xl p-6 sm:p-8 w-full max-w-lg space-y-6 overflow-y-auto max-h-[92vh]">
+            <div className={`bg-white rounded-[32px] border border-slate-200/80 shadow-2xl p-6 sm:p-8 w-full ${courseCreationStep === 1 ? 'max-w-lg' : 'max-w-4xl'} space-y-6 overflow-y-auto max-h-[92vh] transition-all duration-300`}>
               
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-display font-black text-lg text-slate-800">Add New Academy Course</h3>
+                <div className="flex items-center space-x-3">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-xs font-black">
+                    {courseCreationStep}
+                  </span>
+                  <div>
+                    <h3 className="font-display font-black text-lg text-slate-800">
+                      {courseCreationStep === 1 ? "Add New Academy Course" : "Upload Course Lessons & Content"}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      {courseCreationStep === 1 ? "Step 1 of 2: Course Metadata" : "Step 2 of 2: Dynamic Chapters & Quizzes"}
+                    </p>
+                  </div>
+                </div>
                 <button 
                   onClick={handleCloseAddCourseModal}
                   className="text-slate-400 hover:text-slate-600 font-bold text-xs"
@@ -1527,385 +1613,409 @@ export default function AdminDashboard() {
               </div>
 
               <form onSubmit={handleCreateCourse} className="space-y-4 text-xs">
-                {/* Upload Course Content (File dropzone) */}
-                <div className="space-y-1">
-                  <label className="block font-bold text-slate-400 uppercase tracking-wider">Upload Course Content *</label>
-                  <div
-                    onDragEnter={handleDrag}
-                    onDragOver={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDrop={handleDrop}
-                    onClick={() => {
-                      console.log("Dropzone clicked. Triggering hidden file upload input element...");
-                      document.getElementById('course-file-upload')?.click();
-                    }}
-                    className={`relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
-                      dragActive 
-                        ? 'border-blue-500 bg-blue-50/50' 
-                        : parsingState === 'success'
-                        ? 'border-emerald-500 bg-emerald-50/20'
-                        : parsingState === 'error'
-                        ? 'border-rose-500 bg-rose-50/20'
-                        : 'border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    {parsingState === 'idle' && (
-                      <div className="space-y-2">
-                        <div className="p-3 bg-blue-50 rounded-full w-max mx-auto text-blue-600">
-                          <Upload className="w-6 h-6 animate-pulse" />
-                        </div>
+                
+                {courseCreationStep === 1 ? (
+                  <>
+                    {/* Course Title */}
+                    <div className="space-y-1">
+                      <label className="block font-bold text-slate-400 uppercase tracking-wider">Course Title *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Do's and Don'ts in 2026 to Attract Women"
+                        value={courseTitle}
+                        onChange={(e) => setCourseTitle(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-1">
+                      <label className="block font-bold text-slate-400 uppercase tracking-wider">Description</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Provide a comprehensive syllabus overview..."
+                        value={courseDesc}
+                        onChange={(e) => setCourseDesc(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                      />
+                    </div>
+
+                    {/* Categories */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">Main Category *</label>
+                        <select
+                          value={courseMainCat}
+                          onChange={(e) => { setCourseMainCat(e.target.value); setCourseSubCat(''); }}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                        >
+                          <option value="">Select Category</option>
+                          {ALL_CATEGORIES_ORDERED.filter(c => c !== "All").map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">Sub-Category *</label>
+                        <select
+                          value={courseSubCat}
+                          onChange={(e) => setCourseSubCat(e.target.value)}
+                          disabled={!courseMainCat}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 disabled:opacity-50"
+                        >
+                          <option value="">Select Sub</option>
+                          {courseMainCat && getSubCategories(courseMainCat).map(sub => <option key={sub} value={sub}>{sub}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Price & Discounted Price */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">Price (INR)</label>
+                        <input
+                          type="number"
+                          value={coursePrice}
+                          onChange={(e) => setCoursePrice(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">Discounted Price (INR)</label>
+                        <input
+                          type="number"
+                          value={courseDiscountedPrice}
+                          onChange={(e) => setCourseDiscountedPrice(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Intro Section Info */}
+                    <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 text-slate-700 leading-relaxed text-xs">
+                      <span className="font-bold text-blue-700">Course Materials Setup:</span> Fill in the introductory widgets and the interactive **Table of Contents spreadsheet**. Adding or removing rows in the table dynamically establishes the course syllabus, lesson modules, and evaluation questions below.
+                    </div>
+
+                    {/* Inputs: Note, Introduction */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">1. Quick Note for Students *</label>
+                        <textarea
+                          rows={3}
+                          required
+                          placeholder="e.g. Please dedicate 15 minutes daily with zero distractions to master these core principles. Self-discipline is your greatest weapon."
+                          value={quickNote}
+                          onChange={(e) => setQuickNote(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 leading-relaxed font-sans"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block font-bold text-slate-400 uppercase tracking-wider">3. Basic Introduction *</label>
+                        <textarea
+                          rows={3}
+                          required
+                          placeholder="e.g. Welcome to the ultimate course on Self-Mastery. Here we rebuild your mindset from the ground up to cultivate unwavering command."
+                          value={basicIntroduction}
+                          onChange={(e) => setBasicIntroduction(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 leading-relaxed font-sans"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 2. Interactive Table of Contents Spreadsheet */}
+                    <div className="space-y-3 border border-slate-200 rounded-[24px] p-5 bg-white shadow-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                         <div>
-                          <p className="font-bold text-slate-700 text-xs">
-                            Upload or drag & drop course document
-                          </p>
-                          <p className="text-[10px] text-slate-400 mt-1">
-                            Word (.docx) or PDF (.pdf) files only
-                          </p>
+                          <label className="block font-display font-black text-slate-800 text-sm">2. Interactive Table of Contents (Spreadsheet)</label>
+                          <p className="text-[10px] text-slate-400 font-bold">Manage chapter rows directly. Your modifications dynamically define the syllabus outline.</p>
+                        </div>
+                        <div className="bg-blue-50 border border-blue-100 text-blue-700 font-black text-[11px] px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                          <span>Total Chapters: {chapters.length}</span>
                         </div>
                       </div>
-                    )}
 
-                    {parsingState === 'reading' && (
-                      <div className="space-y-3">
-                        <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto" />
-                        <div>
-                          <p className="font-bold text-blue-600 text-xs">Reading document...</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Extracting raw text contents</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {parsingState === 'extracting' && (
-                      <div className="space-y-3">
-                        <Loader2 className="w-6 h-6 animate-spin text-cyan-600 mx-auto" />
-                        <div>
-                          <p className="font-bold text-cyan-600 text-xs">Extracting title & description...</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Analyzing content with Gemini AI</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {parsingState === 'paraphrasing' && (
-                      <div className="space-y-3">
-                        <Loader2 className="w-6 h-6 animate-spin text-purple-600 mx-auto" />
-                        <div>
-                          <p className="font-bold text-purple-600 text-xs">Paraphrasing content...</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Rewriting for originality</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {parsingState === 'success' && (
-                      <div className="space-y-4 w-full">
-                        <div className="p-2 bg-emerald-50 rounded-full w-max mx-auto text-emerald-600">
-                          <CheckCircle className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-emerald-700 text-xs">Successfully Extracted {extractedSections.length} Sections!</p>
-                          <p className="text-[10px] text-slate-500 font-mono mt-1">
-                            {uploadedFileName}
-                          </p>
-                        </div>
-                        
-                        <div className="mt-4 text-left border-t border-slate-200 pt-4">
-                          <h4 className="text-xs font-bold text-slate-700 mb-3">Extracted Chapters for Review ({extractedSections.length} found)</h4>
-                          <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {extractedSections.map((sec, idx) => (
-                              <div key={idx} className="bg-white border border-slate-100 rounded-lg p-2 text-[10px] flex items-center justify-between">
-                                <span className="font-semibold text-slate-700 truncate">{sec.title}</span>
-                                <span className="text-slate-400 font-mono">Vol {sec.volume}</span>
-                              </div>
+                      <div className="overflow-x-auto rounded-xl border border-slate-150">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-400 font-black uppercase tracking-wider text-[9px]">
+                              <th className="py-3 px-4 w-16 text-center">No.</th>
+                              <th className="py-3 px-4 w-1/3">Chapter Title / Lesson Name *</th>
+                              <th className="py-3 px-4">Core Topic Outline / Syllabus Summary *</th>
+                              <th className="py-3 px-4 w-16 text-center">Delete</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {chapters.map((ch, idx) => (
+                              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/40 transition-colors">
+                                <td className="py-3 px-4 text-center font-black text-slate-500">
+                                  #{idx + 1}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder={`e.g. Chapter ${idx + 1}: Foundations of Framing`}
+                                    value={ch.title}
+                                    onChange={(e) => {
+                                      const updated = [...chapters];
+                                      updated[idx].title = e.target.value;
+                                      setChapters(updated);
+                                    }}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-white font-semibold text-slate-800"
+                                  />
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. Setting strong social boundaries and handling frames with high composure."
+                                    value={ch.details || ''}
+                                    onChange={(e) => {
+                                      const updated = [...chapters];
+                                      updated[idx].details = e.target.value;
+                                      setChapters(updated);
+                                    }}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-white text-slate-600"
+                                  />
+                                </td>
+                                <td className="py-2.5 px-3 text-center">
+                                  {chapters.length > 1 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setChapters(chapters.filter((_, i) => i !== idx));
+                                      }}
+                                      className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                                      title="Remove Chapter Row"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  ) : (
+                                    <span className="text-slate-300 text-[10px] font-bold">Locked</span>
+                                  )}
+                                </td>
+                              </tr>
                             ))}
-                          </div>
-                        </div>
+                          </tbody>
+                        </table>
+                      </div>
 
-                        {isPublishing ? (
-                          <div className="mt-4 space-y-2">
-                             <div className="w-full bg-slate-200 rounded-full h-2">
-                                <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${publishProgress}%` }}></div>
-                             </div>
-                             <p className="text-[10px] text-blue-600 font-bold text-center">Publishing: {publishProgress}% Complete...</p>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handlePublishAllSections}
-                            className="w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-xl text-xs hover:bg-blue-700 transition-all shadow-md"
-                          >
-                            Publish Entire Course
-                          </button>
-                        )}
-
+                      <div className="flex justify-end pt-1">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setUploadedFileName(null);
-                            setExtractedSections([]);
-                            setParsingState('idle');
-                            setParsingError(null);
+                          onClick={() => {
+                            const nextIdx = chapters.length + 1;
+                            setChapters([
+                              ...chapters,
+                              {
+                                title: `Chapter ${nextIdx}: `,
+                                content: '',
+                                details: '',
+                                mcqs: [
+                                  {
+                                    question: '',
+                                    options: ['', '', '', ''],
+                                    correctAnswer: 'A',
+                                    feedback: 'Correct! Great understanding of this principle.'
+                                  }
+                                ]
+                              }
+                            ]);
                           }}
-                          className="mt-2 text-[10px] text-rose-500 hover:text-rose-700 font-bold underline cursor-pointer"
+                          className="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 font-bold flex items-center space-x-1.5 transition-all text-[11px]"
                         >
-                          Clear & Upload Another
+                          <span>+ Add New Chapter Row</span>
                         </button>
                       </div>
-                    )}
+                    </div>
 
-                    {parsingState === 'error' && (
-                      <div className="space-y-3">
-                        <div className="p-2 bg-rose-50 rounded-full w-max mx-auto text-rose-600">
-                          <AlertTriangle className="w-6 h-6" />
-                        </div>
+                    {/* Chapters Section */}
+                    <div className="border-t border-slate-150 pt-5 space-y-4">
+                      <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-rose-700 text-xs">Parsing Failed</p>
-                          <p className="text-[10px] text-rose-500 mt-1 px-4">{parsingError}</p>
+                          <h4 className="font-display font-black text-sm text-slate-800">Dynamic Course Chapters & Quizzes</h4>
+                          <p className="text-[10px] text-slate-400 font-bold">Write the reading card copy and configure the single MCQ evaluation for each chapter defined above.</p>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-1 font-bold uppercase tracking-wider">
-                          You can still enter details manually below
-                        </p>
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setParsingState('manual_fallback');
-                            }}
-                            className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md inline-block cursor-pointer"
-                          >
-                            Skip AI parsing — enter chapters manually
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newChapterNum = chapters.length + 1;
+                            setChapters([
+                              ...chapters,
+                              {
+                                title: `Chapter ${newChapterNum}: `,
+                                content: '',
+                                details: '',
+                                mcqs: [
+                                  {
+                                    question: '',
+                                    options: ['', '', '', ''],
+                                    correctAnswer: 'A',
+                                    feedback: 'Correct! Great understanding of this principle.'
+                                  }
+                                ]
+                              }
+                            ]);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold border border-blue-200 flex items-center space-x-1"
+                        >
+                          <span>+ Add Chapter</span>
+                        </button>
                       </div>
-                    )}
 
-                    {parsingState === 'manual_fallback' && (
-                      <div className="space-y-4 w-full text-left p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
-                          <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">Manual Chapter Entry</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setManualChapters([]);
-                              setParsingState('idle');
-                            }}
-                            className="text-[10px] text-rose-500 hover:text-rose-700 font-bold underline"
-                          >
-                            Reset & Try File Upload
-                          </button>
-                        </div>
-
-                        {/* repeatable form */}
-                        <div className="space-y-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1">Chapter Title *</label>
-                            <input
-                              type="text"
-                              value={manualChapterTitle}
-                              onChange={(e) => setManualChapterTitle(e.target.value)}
-                              placeholder="e.g. Chapter 1: Eye Contact Secrets"
-                              className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none text-xs text-slate-800"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className="block text-[10px] font-bold text-slate-500 mb-1">Select Volume *</label>
-                              <select
-                                value={manualChapterVolume}
-                                onChange={(e) => setManualChapterVolume(Number(e.target.value) as 1 | 2)}
-                                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none text-xs bg-white text-slate-800"
-                              >
-                                <option value={1}>Volume 1 (Foundations)</option>
-                                <option value={2}>Volume 2 (Advanced)</option>
-                              </select>
+                      {/* Chapters list */}
+                      <div className="space-y-6">
+                        {chapters.map((ch, cIdx) => (
+                          <div key={cIdx} className="bg-slate-50/50 border border-slate-200 rounded-[24px] p-5 space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                              <span className="text-xs font-black text-blue-600 uppercase tracking-wider">Chapter {cIdx + 1}</span>
+                              {chapters.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setChapters(chapters.filter((_, idx) => idx !== cIdx));
+                                  }}
+                                  className="text-red-500 hover:text-red-700 font-bold text-[10px]"
+                                >
+                                  Remove Chapter
+                                </button>
+                              )}
                             </div>
-                            <div className="flex items-end">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (!manualChapterTitle.trim()) {
-                                    alert("Please enter a chapter title.");
-                                    return;
-                                  }
-                                  if (!manualChapterContent.trim()) {
-                                    alert("Please enter chapter content.");
-                                    return;
-                                  }
-                                  setManualChapters([
-                                    ...manualChapters,
-                                    {
-                                      title: manualChapterTitle.trim(),
-                                      content: manualChapterContent.trim(),
-                                      volume: manualChapterVolume
-                                    }
-                                  ]);
-                                  // Reset individual inputs
-                                  setManualChapterTitle('');
-                                  setManualChapterContent('');
-                                }}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition-all shadow-sm flex items-center justify-center gap-1 cursor-pointer"
-                              >
-                                <span>Add Chapter</span>
-                              </button>
-                            </div>
-                          </div>
 
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 mb-1">Chapter Content *</label>
-                            <textarea
-                              rows={5}
-                              value={manualChapterContent}
-                              onChange={(e) => setManualChapterContent(e.target.value)}
-                              placeholder="Type or paste the full text content for this chapter..."
-                              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none text-xs font-sans resize-y text-slate-800"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Running list of chapters */}
-                        {manualChapters.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                              <span>Added Chapters ({manualChapters.length})</span>
-                              <span className="text-[10px] text-slate-400 font-normal">Order of addition matters</span>
-                            </h4>
-                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                              {manualChapters.map((ch, idx) => (
-                                <div key={idx} className="bg-white border border-slate-200 rounded-lg p-2 text-xs flex items-center justify-between shadow-xs">
-                                  <div className="truncate pr-2">
-                                    <span className="font-bold text-blue-600 mr-2">#{idx + 1}</span>
-                                    <span className="font-semibold text-slate-700">{ch.title}</span>
-                                    <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[9px] rounded font-mono font-bold">Vol {ch.volume}</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setManualChapters(manualChapters.filter((_, i) => i !== idx));
-                                    }}
-                                    className="text-[10px] text-rose-500 hover:text-rose-700 hover:underline font-bold cursor-pointer"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Publishing Progress or Action */}
-                        <div className="pt-2 border-t border-slate-200 mt-2">
-                          {isPublishing ? (
-                            <div className="space-y-2">
-                              <div className="w-full bg-slate-200 rounded-full h-2">
-                                <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${publishProgress}%` }}></div>
+                            <div className="grid grid-cols-1 gap-3">
+                              {/* Chapter Title */}
+                              <div className="space-y-1">
+                                <label className="block font-bold text-slate-500 uppercase tracking-wider">Chapter Title *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder={`e.g. Chapter ${cIdx + 1}: Core Mindset Shifts`}
+                                  value={ch.title}
+                                  onChange={(e) => {
+                                    const updated = [...chapters];
+                                    updated[cIdx].title = e.target.value;
+                                    setChapters(updated);
+                                  }}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-white"
+                                />
                               </div>
-                              <p className="text-[10px] text-blue-600 font-bold text-center">Publishing Manual Course: {publishProgress}% Complete...</p>
+
+                              {/* Chapter Content / Explanation */}
+                              <div className="space-y-1">
+                                <label className="block font-bold text-slate-500 uppercase tracking-wider">Chapter Explanation / Content *</label>
+                                <textarea
+                                  rows={5}
+                                  required
+                                  placeholder="Type the core training text and explanation for this chapter. This content represents the detailed reading card for your students."
+                                  value={ch.content}
+                                  onChange={(e) => {
+                                    const updated = [...chapters];
+                                    updated[cIdx].content = e.target.value;
+                                    setChapters(updated);
+                                  }}
+                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-white leading-relaxed font-sans"
+                                />
+                              </div>
                             </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handlePublishManualCourse}
-                              disabled={manualChapters.length === 0}
-                              className={`w-full py-2 px-4 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
-                                manualChapters.length === 0 
-                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
-                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                              }`}
-                            >
-                              Publish Course with {manualChapters.length} Manual Chapters
-                            </button>
-                          )}
-                        </div>
+
+                            {/* MCQs section for this Chapter */}
+                            <div className="border-t border-slate-150 pt-3 space-y-3">
+                              <h5 className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Chapter Evaluation: 1 MCQ Required</h5>
+                              
+                              <div className="space-y-4">
+                                {ch.mcqs.map((mcq, qIdx) => (
+                                  <div key={qIdx} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase">
+                                      <span>Multiple Choice Question</span>
+                                    </div>
+
+                                    {/* MCQ Question input */}
+                                    <div className="space-y-1">
+                                      <input
+                                        type="text"
+                                        required
+                                        placeholder={`e.g. What is the fundamental pillar of frame control?`}
+                                        value={mcq.question}
+                                        onChange={(e) => {
+                                          const updated = [...chapters];
+                                          updated[cIdx].mcqs[qIdx].question = e.target.value;
+                                          setChapters(updated);
+                                        }}
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
+                                      />
+                                    </div>
+
+                                    {/* 4 Options Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {['A', 'B', 'C', 'D'].map((letter, optIdx) => (
+                                        <div key={letter} className="flex items-center space-x-2">
+                                          <span className="font-black text-blue-600 text-[10px]">{letter}</span>
+                                          <input
+                                            type="text"
+                                            required
+                                            placeholder={`Option ${letter}`}
+                                            value={mcq.options[optIdx]}
+                                            onChange={(e) => {
+                                              const updated = [...chapters];
+                                              updated[cIdx].mcqs[qIdx].options[optIdx] = e.target.value;
+                                              setChapters(updated);
+                                            }}
+                                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 text-[11px]"
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Correct Option Dropdown & Feedback */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                      <div className="space-y-1">
+                                        <label className="block font-bold text-slate-400 uppercase tracking-widest text-[9px]">Correct Answer</label>
+                                        <select
+                                          value={mcq.correctAnswer}
+                                          onChange={(e) => {
+                                            const updated = [...chapters];
+                                            updated[cIdx].mcqs[qIdx].correctAnswer = e.target.value;
+                                            setChapters(updated);
+                                          }}
+                                          className="w-full px-2 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 text-[11px] font-bold"
+                                        >
+                                          <option value="A">Option A</option>
+                                          <option value="B">Option B</option>
+                                          <option value="C">Option C</option>
+                                          <option value="D">Option D</option>
+                                        </select>
+                                      </div>
+
+                                      <div className="space-y-1 sm:col-span-2">
+                                        <label className="block font-bold text-slate-400 uppercase tracking-widest text-[9px]">Feedback / Explanation</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. Correct! Frame control requires deep composure and non-reactivity."
+                                          value={mcq.feedback}
+                                          onChange={(e) => {
+                                            const updated = [...chapters];
+                                            updated[cIdx].mcqs[qIdx].feedback = e.target.value;
+                                            setChapters(updated);
+                                          }}
+                                          className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 text-[11px]"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                  <input
-                    id="course-file-upload"
-                    type="file"
-                    accept=".docx,.pdf"
-                    onChange={handleFileInputChange}
-                    onClick={(e) => {
-                      console.log("File upload input clicked, stopping propagation of click to parent dropzone.");
-                      e.stopPropagation();
-                    }}
-                    className="hidden"
-                  />
-                </div>
-
-                {/* Course Title */}
-                <div className="space-y-1">
-                  <label className="block font-bold text-slate-400 uppercase tracking-wider">Course Title *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Do's and Don'ts in 2026 to Attract Women"
-                    value={courseTitle}
-                    onChange={(e) => setCourseTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="space-y-1">
-                  <label className="block font-bold text-slate-400 uppercase tracking-wider">Description</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Provide a comprehensive syllabus overview..."
-                    value={courseDesc}
-                    onChange={(e) => setCourseDesc(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
-                  />
-                </div>
-
-                {/* Categories */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="block font-bold text-slate-400 uppercase tracking-wider">Main Category *</label>
-                    <select
-                      value={courseMainCat}
-                      onChange={(e) => { setCourseMainCat(e.target.value); setCourseSubCat(''); }}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
-                    >
-                      <option value="">Select Category</option>
-                      {ALL_CATEGORIES_ORDERED.filter(c => c !== "All").map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block font-bold text-slate-400 uppercase tracking-wider">Sub-Category *</label>
-                    <select
-                      value={courseSubCat}
-                      onChange={(e) => setCourseSubCat(e.target.value)}
-                      disabled={!courseMainCat}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50 disabled:opacity-50"
-                    >
-                      <option value="">Select Sub</option>
-                      {courseMainCat && getSubCategories(courseMainCat).map(sub => <option key={sub} value={sub}>{sub}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Price & Estimated Time */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="block font-bold text-slate-400 uppercase tracking-wider">Price (₹ INR)</label>
-                    <input
-                      type="number"
-                      value={coursePrice}
-                      onChange={(e) => setCoursePrice(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-none bg-slate-50"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="block font-bold text-slate-400 uppercase tracking-wider">Estimated Time</label>
-                    <div className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 font-bold flex items-center justify-between">
-                      <span>{courseTime || '—'}</span>
-                      {courseTime && <span className="text-[9px] uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-black">Auto-Calc</span>}
                     </div>
                   </div>
-                </div>
+                )}
 
                 {courseStatusMsg && (
                   <p className={`p-3 rounded-xl font-bold text-center ${courseStatusMsg.includes('success') ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
@@ -1913,22 +2023,35 @@ export default function AdminDashboard() {
                   </p>
                 )}
 
-                <div className="flex justify-end space-x-2 pt-4 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={handleCloseAddCourseModal}
-                    className="px-4 py-2.5 rounded-xl border border-slate-250 hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={savingCourse}
-                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold disabled:opacity-50 flex items-center space-x-1"
-                  >
-                    {savingCourse && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    <span>Publish Course</span>
-                  </button>
+                <div className="flex justify-between pt-4 border-t border-slate-100">
+                  <div>
+                    {courseCreationStep === 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setCourseCreationStep(1)}
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold"
+                      >
+                        Back to Details
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseAddCourseModal}
+                      className="px-4 py-2.5 rounded-xl border border-slate-250 hover:bg-slate-50 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingCourse}
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold disabled:opacity-50 flex items-center space-x-1"
+                    >
+                      {savingCourse && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      <span>{courseCreationStep === 1 ? "Next" : "Publish Course"}</span>
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

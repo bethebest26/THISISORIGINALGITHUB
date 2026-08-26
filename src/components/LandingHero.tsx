@@ -430,7 +430,11 @@ export default function LandingHero({ onGetStarted, onBrowseCourses, activeStude
             {/* Blog Post 1 */}
             <a href="#" className="group flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
               <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <img 
+                  src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=800&q=80" 
+                  alt="Mindset" 
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 uppercase tracking-wider">
                   Mindset
                 </div>
@@ -456,7 +460,11 @@ export default function LandingHero({ onGetStarted, onBrowseCourses, activeStude
             {/* Blog Post 2 */}
             <a href="#" className="group flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
               <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <img 
+                  src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=800&q=80" 
+                  alt="Career Body Language" 
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
                   Career
                 </div>
@@ -482,7 +490,11 @@ export default function LandingHero({ onGetStarted, onBrowseCourses, activeStude
             {/* Blog Post 3 (Hidden on mobile to keep grid balanced if 2 cols, shown on LG) */}
             <a href="#" className="group hidden lg:flex flex-col glass-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/60 bg-white/50 transition-all duration-300">
               <div className="aspect-[16/9] w-full bg-slate-100 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/50 to-slate-200/50 group-hover:scale-105 transition-transform duration-700" />
+                <img 
+                  src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80" 
+                  alt="Deep Work" 
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-cyan-600 uppercase tracking-wider">
                   Productivity
                 </div>

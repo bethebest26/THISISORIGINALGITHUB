@@ -171,7 +171,7 @@ export default function Footer({ onCategoryClick }: FooterProps) {
               BeTheBest
             </span>
           </div>
-          <span className="text-sm">© 2026 BeTheBest, Inc. | All Rights Reserved.</span>
+          <span className="text-sm">© 2026 BeTheBest LLP | All Rights Reserved.</span>
         </div>
 
       </div>

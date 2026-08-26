@@ -56,11 +56,21 @@ export default function AboutPage({ activeStudents, testsCompleted, onRegister, 
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="max-w-3xl mx-auto text-center mt-12 mb-32 px-4"
+        className="w-full max-w-5xl mx-auto mt-12 mb-24 px-4 grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center"
       >
-        <p className="font-display font-bold text-2xl sm:text-3xl md:text-[36px] leading-[1.35] text-slate-900 tracking-tight">
-          Self-help content is often vague and endless. We built BeTheBest to be short, direct, and genuinely interesting to learn from — with quizzes that make you smarter and help you grow.
-        </p>
+        <div>
+          <p className="font-display font-bold text-3xl sm:text-4xl md:text-[38px] leading-[1.35] text-slate-900 tracking-tight text-left">
+            Self-help content is often vague and endless. We built BeTheBest to be short, direct, and genuinely interesting to learn from — with quizzes that make you smarter and help you grow.
+          </p>
+        </div>
+        <div className="relative rounded-3xl overflow-hidden shadow-xl shadow-blue-900/5 ring-1 ring-slate-900/5 aspect-square sm:aspect-[4/3] md:aspect-[5/4] lg:aspect-[4/3] group bg-slate-100">
+           <img 
+             src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" 
+             alt="Engaging learning" 
+             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+           />
+           <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/10 to-transparent mix-blend-multiply" />
+        </div>
       </motion.div>
 
       {/* Three Points */}
