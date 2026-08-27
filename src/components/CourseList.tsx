@@ -60,22 +60,13 @@ export default function CourseList({
     const mainCat = (course.mainCategory || course.main_category || "").toLowerCase();
     const subCat = (course.subCategory || course.sub_category || "").toLowerCase();
     
-    const matchesMain = selectedMainCategory === "All" || 
-      mainCat === selectedMainCategory.toLowerCase() ||
-      mainCat.includes(selectedMainCategory.toLowerCase());
-
-    let matchesSub = true;
-    if (selectedMainCategory !== "All" && selectedSubCategory && selectedSubCategory !== `All ${selectedMainCategory}`) {
-        matchesSub = subCat === selectedSubCategory.toLowerCase() || subCat.includes(selectedSubCategory.toLowerCase());
-    }
-
     const matchesSearch = 
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       mainCat.includes(searchQuery.toLowerCase()) ||
       subCat.includes(searchQuery.toLowerCase());
       
-    return matchesMain && matchesSub && matchesSearch;
+    return matchesSearch;
   });
 
   return (
@@ -107,70 +98,11 @@ export default function CourseList({
         </div>
       </div>
 
-      {/* Category Selector Pills */}
-      <div className="flex flex-wrap gap-2 pb-4">
-        {categories.map((category) => {
-          const isSelected = selectedMainCategory === category;
-          const hasSubCategories = getSubCategories(category).length > 0;
-          return (
-            <div key={category} className="relative flex flex-col items-center">
-              <button
-                onClick={() => { setSelectedMainCategory(category); setSelectedSubCategory(null); }}
-                className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide whitespace-nowrap border transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-blue-600 text-white border-transparent shadow-sm"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {category}
-              </button>
-              
-              {/* Connector caret */}
-              {isSelected && hasSubCategories && (
-                <div className="absolute -bottom-3.5 flex flex-col items-center">
-                  <div className="w-0.5 h-2 bg-blue-600 rounded-t-sm" />
-                  <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-blue-600" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Sub-Category Selector Pills */}
-      {selectedMainCategory !== "All" && getSubCategories(selectedMainCategory).length > 0 && (
-        <div className="flex flex-wrap gap-2 pb-4">
-          <button
-              onClick={() => setSelectedSubCategory(null)}
-              className={`px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wide whitespace-nowrap border transition-all cursor-pointer ${
-                  selectedSubCategory === null
-                  ? "bg-blue-100 text-blue-700 border-blue-200 shadow-sm"
-                  : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-              }`}
-          >
-              All {selectedMainCategory}
-          </button>
-          {getSubCategories(selectedMainCategory).map((subCategory) => (
-              <button
-              key={subCategory}
-              onClick={() => setSelectedSubCategory(subCategory)}
-              className={`px-3 py-1.5 rounded-full text-[10px] font-semibold tracking-wide whitespace-nowrap border transition-all cursor-pointer ${
-                  selectedSubCategory === subCategory
-                  ? "bg-blue-100 text-blue-700 border-blue-200 shadow-sm"
-                  : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-              }`}
-              >
-              {subCategory}
-              </button>
-          ))}
-        </div>
-      )}
-
       {/* Course Cards Grid */}
       <AnimatePresence mode="wait">
         {filteredCourses.length > 0 ? (
           <motion.div
-            key={selectedMainCategory + (selectedSubCategory || "") + searchQuery}
+            key={searchQuery}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}

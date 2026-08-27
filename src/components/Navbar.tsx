@@ -95,17 +95,6 @@ export default function Navbar({
                   Home
                 </button>
                 <button
-                  id="nav-tab-about"
-                  onClick={() => onTabChange("about")}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                    currentTab === "about"
-                      ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
-                      : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
-                  }`}
-                >
-                  About Us
-                </button>
-                <button
                   id="nav-tab-courses"
                   onClick={() => onTabChange("courses")}
                   className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
@@ -116,18 +105,6 @@ export default function Navbar({
                 >
                   Courses
                 </button>
-                <a
-                  href="#"
-                  className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
-                >
-                  Success Stories
-                </a>
-                <a
-                  href="#"
-                  className="px-4 py-2 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
-                >
-                  News/Blogs
-                </a>
               </>
             )}
 
@@ -309,20 +286,6 @@ export default function Navbar({
                     Home
                   </button>
                   <button
-                    id="nav-mobile-about"
-                    onClick={() => {
-                      onTabChange("about");
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium border transition-all ${
-                      currentTab === "about"
-                        ? "text-blue-600 bg-white/60 border-white/50 font-semibold shadow-sm"
-                        : "text-slate-600 border-transparent hover:text-blue-600 hover:bg-white/40"
-                    }`}
-                  >
-                    About Us
-                  </button>
-                  <button
                     id="nav-mobile-courses"
                     onClick={() => {
                       onTabChange("courses");
@@ -336,18 +299,6 @@ export default function Navbar({
                   >
                     Courses
                   </button>
-                  <a
-                    href="#"
-                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
-                  >
-                    Success Stories
-                  </a>
-                  <a
-                    href="#"
-                    className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium border border-transparent text-slate-600 hover:text-blue-600 hover:bg-white/40 transition-all"
-                  >
-                    News/Blogs
-                  </a>
                   <hr className="border-white/20 my-2" />
                   <button
                     id="nav-mobile-login-text"
